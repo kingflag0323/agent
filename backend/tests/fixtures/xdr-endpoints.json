@@ -1,0 +1,518 @@
+[
+  {
+    "uri": "/api/xdr/v1/incident/labelInfo",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/setting",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/setting/{customScreenId}",
+    "type": 3
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/devlist",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchlist",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/areasinfo",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/topologymap/defaultinfo",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/topologymap/defaultstatus",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/total/score",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/total/riskdealcount",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/total/devcount",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/trends/asset",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/trends/incident",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/trends/order",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/trends/vuls",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/trends/flawdev",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/trends/firewalldev",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/trends/flowdev",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/trends/terminaldev",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchs/detailInfo",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchs/accessInfo",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchs/total",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchs/riskoverview",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchs/vuls/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/asset/details",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchs/assets/details",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchs/order/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/asset/trendsdetails",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/bigscreen/branchs/incidents/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/trustfile/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/trustfilerule",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/disposefilerule",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/blockiprule/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/blockiprule/unblock",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/blockiprule/network",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/blockiprule/reblock",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/blockiprule/endpoint",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/blockiprule/detail",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/virusscantask/:taskId",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/responses/virusscantask",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/host/unisolate",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/responses/host/isolate/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/dealstatus",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/:uuid/entities/dns",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/:uuid/entities/innerip",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/:uuid/entities/ip",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/:uuid/entities/host",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/:uuid/entities/file",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/:uuid/entities/process",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/:uuid/proof",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/dealstatus/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/aggregation",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/trends",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/gpt/isenabled",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/disposal/record/statistics",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/list/attrescorrect",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/:uuid/proof",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/attcktechniques",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/dealstatus/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/dealstatus",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/aggregation",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/ipinfosstats",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/ipInfos",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/alerts/branchstats",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/analysislog/networksecurity/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/analysislog/networksecurity/count",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/securitylog/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/soar/playbooks/statistics",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/soar/playbooks/histories/run/trend",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/soar/playbooks/execution/statistics",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/soar/playbooks/histories/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/soar/playbooks/histories/tasks/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/orders/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/orders",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/orders/aggregation",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/orders/stats",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/whitelists/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/whitelists",
+    "type": 3
+  },
+  {
+    "uri": "/api/xdr/v1/whitelists",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/whitelists/:id/status",
+    "type": 2
+  },
+  {
+    "uri": "/api/xdr/v1/whitelists/:id",
+    "type": 2
+  },
+  {
+    "uri": "/api/xdr/v1/inspection/latest/cluster",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/inspection/cluster",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/fixstatus",
+    "type": 6
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/sourcedevice",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/baseline/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/threattag",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/attacktype",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/optionfield",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/aggregation",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/asset/aggregation",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/asset/stats",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/trends",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/aggregation/count",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/aggregation/loopholeLevel",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/aggregation/baselineLevel",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/vuls/risk/aggregation/attackType",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/incidents/rules/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/rule/manage/alerts/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/device/blockdevice/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/aggregation/business",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/total",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/uploadasset",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/sourcedevice",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/assets/assetclass",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/assets/assetsource",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/assetadapter",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/assetadapter",
+    "type": 3
+  },
+  {
+    "uri": "/api/xdr/v1/assets/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/list",
+    "type": 3
+  },
+  {
+    "uri": "/api/xdr/v1/assets/list",
+    "type": 2
+  },
+  {
+    "uri": "/api/xdr/v1/assets/ipsegmenttree",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v2/assets/vpc",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/approve/indepot",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/approve/waitapprove",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/approve/ignore",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/custom/list",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/assets/user",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/assets/user",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/assets/department",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/assets/depot/incheckinfo",
+    "type": 1
+  },
+  {
+    "uri": "/api/xdr/v1/siem/strategies/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/riskassets/list",
+    "type": 0
+  },
+  {
+    "uri": "/api/xdr/v1/riskassets/trends",
+    "type": 0
+  }
+]
