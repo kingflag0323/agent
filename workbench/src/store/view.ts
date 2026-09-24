@@ -4,7 +4,6 @@ export type View =
   | "intelligence"
   | "overview"
   | "events"
-  | "canvas"
   | "code"
   | "runs"
   | "settings";

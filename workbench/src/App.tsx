@@ -11,7 +11,6 @@ import { Intelligence } from "@/views/Intelligence";
 import { Canvas } from "@/views/Canvas";
 import { CodeAudit } from "@/views/CodeAudit";
 import { Settings } from "@/views/Settings";
-import { Reports } from "@/views/Reports";
 export default function App() {
   const { view, setView } = useViewStore();
   const [event, setEvent] = useState<string | null>(null),
@@ -35,7 +34,7 @@ export default function App() {
   };
   const openJob = (id: string) => {
     setJob(id);
-    setView("canvas");
+    setView("runs");
   };
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
@@ -54,13 +53,12 @@ export default function App() {
               run={run}
             />
           )}{" "}
-          {view === "canvas" && (
-            <Canvas id={job} selectJob={setJob} run={run} />
-          )}{" "}
           {view === "assets" && <Assets run={run} />}
           {view === "intelligence" && <Intelligence run={run} />}
           {view === "code" && <CodeAudit run={run} />}{" "}
-          {view === "runs" && <Reports open={openJob} run={run} />}{" "}
+          {view === "runs" && (
+            <Canvas id={job} selectJob={setJob} run={run} />
+          )}{" "}
           {view === "settings" && <Settings run={run} onSave={refresh} />}
         </div>
       </div>

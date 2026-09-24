@@ -7,7 +7,6 @@ import {
   type LucideIcon,
   Package,
   Settings,
-  Workflow,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -20,9 +19,8 @@ const ITEMS: Item[] = [
   { view: "assets", label: "资产", icon: Server },
   { view: "intelligence", label: "威胁情报", icon: Radar },
   { view: "events", label: "事件", icon: Boxes },
-  { view: "canvas", label: "调查画布", icon: Workflow },
   { view: "code", label: "代码", icon: Package },
-  { view: "runs", label: "调查思维链", icon: History },
+  { view: "runs", label: "思维链", icon: History },
 ];
 const SETTINGS: Item = { view: "settings", label: "设置", icon: Settings };
 

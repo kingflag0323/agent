@@ -61,7 +61,11 @@ export function Canvas({
     [matchIndex, setMatchIndex] = useState(0),
     [tab, setTab] = useState("details");
   useEffect(() => {
-    run(async () => setJobs(await api("/investigations")));
+    run(async () => {
+      const rows = await api("/investigations");
+      setJobs(rows);
+      if (!id && rows.length) selectJob(rows[0].id);
+    });
   }, [id]);
   useEffect(() => {
     setJob(undefined);
@@ -134,7 +138,7 @@ export function Canvas({
       <aside className="w-64 shrink-0 border-r bg-card flex flex-col">
         <div className="pane-heading">
           <Layers size={16} />
-          <h2>调查与证据</h2>
+          <h2>调查思维链</h2>
         </div>
         <div className="p-3 border-b">
           <select
@@ -181,24 +185,35 @@ export function Canvas({
       <main className="min-w-0 flex-1 flex flex-col">
         <div className="pane-heading">
           <div>
-            <h2>{job?.event.name || "Attack → Code 调查画布"}</h2>
-            <p>{job ? job.id : "证据驱动的攻击路径与代码关联"}</p>
+            <h2>{job?.event.name || "调查过程与攻击代码关联"}</h2>
+            <p>
+              {job
+                ? job.id
+                : "执行节点、证据、攻击路径与代码位置统一呈现"}
+            </p>
           </div>
           <div className="flex gap-2 items-center">
             {job && <Badge value={job.status} />}
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={job?.status !== "completed" || job?.remediation_pending}
-              onClick={() =>
-                run(async () => {
-                  await window.desktop.exportReport(job!.id, "markdown");
-                })
-              }
-            >
-              <Download size={14} />
-              报告
-            </Button>
+            {["docx", "markdown", "json"].map((format) => (
+              <Button
+                key={format}
+                size="sm"
+                variant={format === "docx" ? "default" : "outline"}
+                disabled={job?.status !== "completed" || job?.remediation_pending}
+                onClick={() =>
+                  run(async () => {
+                    await window.desktop.exportReport(job!.id, format);
+                  })
+                }
+              >
+                {format === "docx" && <Download size={14} />}
+                {format === "docx"
+                  ? "导出 Word"
+                  : format === "markdown"
+                    ? "MD"
+                    : "JSON"}
+              </Button>
+            ))}
           </div>
         </div>
         <div className="flex gap-2 px-4 py-2 border-b items-center text-xs">
@@ -284,10 +299,10 @@ export function Canvas({
           </div>
           <div className="overflow-auto px-4 py-2 h-28">
             {job?.timeline?.map((step: Data, i: number) => (
-              <div key={i} className="console-row">
+              <div key={i} className="console-row investigation-step">
                 <CheckCircle2 size={12} />
                 <span>{String(i + 1).padStart(2, "0")}</span>
-                <strong>{step.agent || step.name}</strong>
+                <h3>{step.agent || step.name}</h3>
                 <span>{step.tool}</span>
                 <span className="grow truncate">
                   {step.note || step.description || step.summary}

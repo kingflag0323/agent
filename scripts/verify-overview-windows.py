@@ -58,6 +58,13 @@ try:
         page.get_by_label("外观主题").select_option("dark")
         page.screenshot(path=str(output / "installed-overview-dark.png"))
 
+        assert page.get_by_role("button", name="调查画布", exact=True).count() == 0
+        page.get_by_role("button", name="思维链", exact=True).click()
+        expect(page.get_by_role("heading", name="调查思维链", exact=True)).to_be_visible()
+        expect(page.get_by_label("选择调查")).not_to_have_value("")
+        expect(page.get_by_text("执行记录 / RUN CONSOLE", exact=True)).to_be_visible()
+        page.screenshot(path=str(output / "installed-investigation-chain.png"))
+
         result = {
             "status": "passed",
             "event_count": dashboard["total"],
@@ -69,6 +76,8 @@ try:
                 "four KPI cards",
                 "trend and risk panels",
                 "light and dark themes",
+                "single investigation-chain navigation",
+                "merged graph and execution console",
             ],
         }
         (output / "result.json").write_text(

@@ -91,7 +91,7 @@ try:
   page.locator('.react-flow__node').filter(has_text='find_user').click()
   result['steps'].append('Event search, project binding, real Bandit SQL investigation, 4-node graph and selected function snapshot')
   page.get_by_label('外观主题').select_option('dark');expect(page.locator('html')).to_have_class('dark')
-  page.screenshot(path=str(output/'02-canvas-dark.png'))
+  page.screenshot(path=str(output/'02-investigation-chain-dark.png'))
   page.locator('.evidence-item').first.click();expect(page.locator('.json')).to_be_visible();page.screenshot(path=str(output/'03-evidence.png'))
   report=page.evaluate("""async()=>{const jobs=await window.desktop.request('/investigations');const j=jobs.find(x=>x.event.id==='demo-001'&&x.status==='completed');return await window.desktop.request('/investigations/'+j.id+'/report')}""")
   assert 'CWE-89' in report;(output/'demo-report.md').write_text(report,encoding='utf-8')
@@ -122,7 +122,7 @@ try:
   assert page.evaluate("typeof require")=='undefined'
   rejected=page.evaluate("window.desktop.request('https://example.com').then(()=>false,()=>true)");assert rejected
   result['steps'].append('Renderer sandbox/IPC URL boundary')
-  page.get_by_role('button',name='调查思维链',exact=True).click()
+  page.get_by_role('button',name='思维链',exact=True).click()
   expect(page.get_by_role('heading',name='调查思维链',exact=True)).to_be_visible()
   expect(page.get_by_role('heading',name='Planner',exact=True)).to_be_visible()
   expect(page.get_by_role('button',name='导出 Word',exact=True)).to_be_enabled()
