@@ -17,15 +17,33 @@ export default function App() {
     [job, setJob] = useState<string | null>(null),
     [error, setError] = useState(""),
     [mode, setMode] = useState(""),
-    [model, setModel] = useState("");
+    [model, setModel] = useState(""),
+    [modelName, setModelName] = useState(""),
+    [serviceHealthy, setServiceHealthy] = useState(false),
+    [workspaceStats, setWorkspaceStats] = useState({
+      events: 0,
+      vulnerabilities: 0,
+      running: 0,
+    });
   const run = useCallback((fn: () => Promise<any>) => {
     void fn().catch((e) => setError(errorText(e)));
   }, []);
   const refresh = () =>
     run(async () => {
-      const s = await api("/settings");
+      const [s, health, dashboard] = await Promise.all([
+        api("/settings"),
+        api("/health"),
+        api("/dashboard"),
+      ]);
       setMode(s.xdr.mode);
       setModel(s.llm.mode);
+      setModelName(s.llm.model || "");
+      setServiceHealthy(health.status === "ok");
+      setWorkspaceStats({
+        events: dashboard.total || 0,
+        vulnerabilities: dashboard.vulnerabilities || 0,
+        running: dashboard.running || 0,
+      });
     });
   useEffect(refresh, []);
   const openEvent = (id: string) => {
@@ -38,7 +56,13 @@ export default function App() {
   };
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
-      <TitleBar />
+      <TitleBar
+        sourceMode={mode}
+        modelMode={model}
+        modelName={modelName}
+        healthy={serviceHealthy}
+        stats={workspaceStats}
+      />
       <div className="flex min-h-0 flex-1">
         <LeftRail />
         <div className="grow min-w-0 relative">
@@ -56,9 +80,7 @@ export default function App() {
           {view === "assets" && <Assets run={run} />}
           {view === "intelligence" && <Intelligence run={run} />}
           {view === "code" && <CodeAudit run={run} />}{" "}
-          {view === "runs" && (
-            <Canvas id={job} selectJob={setJob} run={run} />
-          )}{" "}
+          {view === "runs" && <Canvas id={job} selectJob={setJob} run={run} />}{" "}
           {view === "settings" && <Settings run={run} onSave={refresh} />}
         </div>
       </div>

@@ -46,6 +46,8 @@ try:
         )
         page.set_default_timeout(30_000)
         expect(page.get_by_role("heading", name="安全态势总览")).to_be_visible()
+        expect(page.get_by_label("工作区状态")).to_contain_text("服务正常")
+        expect(page.get_by_label("工作区状态")).to_contain_text("XDR 实时")
         dashboard = page.evaluate("window.desktop.request('/dashboard')")
         categories = [row["name"] for row in dashboard["types"]]
         assert categories
@@ -79,6 +81,7 @@ try:
             "numeric_category_visible": False,
             "checks": [
                 "installed executable",
+                "title-bar workspace telemetry",
                 "existing XDR cache",
                 "four KPI cards",
                 "trend and risk panels",

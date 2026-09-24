@@ -1,5 +1,102 @@
 .titlebar {
   -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 15px;
+  color: var(--foreground);
+}
+.titlebar-brand,
+.titlebar-context,
+.titlebar-telemetry,
+.titlebar-telemetry > span {
+  display: flex;
+  align-items: center;
+}
+.titlebar-brand {
+  gap: 9px;
+  flex-shrink: 0;
+}
+.titlebar-brand strong {
+  font-size: 14px;
+  letter-spacing: 0.25px;
+}
+.titlebar-brand span {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.titlebar-divider {
+  width: 1px;
+  height: 20px;
+  flex-shrink: 0;
+  background: var(--border);
+}
+.titlebar-context {
+  gap: 7px;
+  min-width: 90px;
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 600;
+}
+.titlebar-context svg {
+  color: var(--primary);
+}
+.titlebar-telemetry {
+  gap: 5px;
+  min-width: 0;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--secondary) 70%, transparent);
+}
+.titlebar-telemetry > span {
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  border-right: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 9px;
+  white-space: nowrap;
+}
+.titlebar-telemetry > span:last-child {
+  border-right: 0;
+}
+.titlebar-telemetry i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d59a35;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #d59a35 15%, transparent);
+}
+.titlebar-telemetry .healthy i {
+  background: #1ba784;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #1ba784 16%, transparent);
+}
+.titlebar-telemetry .running {
+  color: var(--primary);
+}
+.titlebar-telemetry .running i {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+.titlebar-model {
+  color: var(--foreground) !important;
+  font-weight: 600;
+}
+.titlebar-spacer {
+  flex: 1;
+}
+@media (max-width: 1180px) {
+  .titlebar-brand span,
+  .titlebar-stat {
+    display: none !important;
+  }
+}
+@media (max-width: 900px) {
+  .titlebar-telemetry > span:nth-child(2),
+  .titlebar-model {
+    display: none !important;
+  }
 }
 .no-drag,
 button,
