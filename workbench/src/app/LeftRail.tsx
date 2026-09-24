@@ -19,7 +19,7 @@ const ITEMS: Item[] = [
   { view: "assets", label: "资产", icon: Server },
   { view: "intelligence", label: "威胁情报", icon: Radar },
   { view: "events", label: "事件", icon: Boxes },
-  { view: "code", label: "代码", icon: Package },
+  { view: "code", label: "代码审计", icon: Package },
   { view: "runs", label: "思维链", icon: History },
 ];
 const SETTINGS: Item = { view: "settings", label: "设置", icon: Settings };

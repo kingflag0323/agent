@@ -1,50 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
-  Handle,
-  Position,
-  BackgroundVariant,
-  type NodeProps,
-  useNodesState,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import {
   FileCode2,
   Download,
   Layers,
   Search,
   Network,
   CheckCircle2,
+  ChevronRight,
 } from "lucide-react";
 import { api, Data, fmt, labels } from "@/lib/api";
 import { Badge, Code, Empty, Json } from "@/components/Common";
 import { Button } from "@/components/ui/button";
-import { useThemeStore } from "@/store/theme";
-function InvestigationNode({ data, selected }: NodeProps) {
-  const d = data as Data;
-  return (
-    <div
-      className={
-        "investigation-node " +
-        (selected ? "active " : "") +
-        (d.sink ? "sink" : "")
-      }
-    >
-      <Handle type="target" position={Position.Left} />
-      <div className="node-cap">
-        <FileCode2 size={14} />
-        {d.role}
-      </div>
-      <strong>{d.label}</strong>
-      <small>{d.location}</small>
-      <Handle type="source" position={Position.Right} />
-    </div>
-  );
-}
-const nodeTypes = { investigation: InvestigationNode };
 export function Canvas({
   id,
   selectJob,
@@ -54,7 +20,6 @@ export function Canvas({
   selectJob: (id: string) => void;
   run: (fn: () => Promise<any>) => void;
 }) {
-  const theme = useThemeStore((s) => s.theme);
   const [jobs, setJobs] = useState<Data[]>([]),
     [job, setJob] = useState<Data>(),
     [selection, setSelection] = useState<Data | null>(null),
@@ -97,17 +62,17 @@ export function Canvas({
     };
   }, [id]);
   const match = job?.correlation?.matches?.[matchIndex];
-  const graph = useMemo(() => {
-    if (!match) return { nodes: [], edges: [] };
-    const data = [
+  const pathNodes = useMemo(() => {
+    if (!match) return [];
+    return [
       {
-        role: "ATTACK ENTRY",
+        role: "攻击入口",
         label: (match.entry.method || "HTTP") + " " + match.entry.path,
-        location: "XDR HTTP evidence",
+        location: "XDR HTTP 证据",
         evidenceId: match.entry.evidence_id,
       },
       ...match.chain.map((n: Data, i: number) => ({
-        role: i === match.chain.length - 1 ? "VULNERABLE SINK" : "CODE PATH",
+        role: i === match.chain.length - 1 ? "漏洞位置" : "代码路径",
         label: n.name + "()",
         location: n.file + ":" + n.line,
         sink: i === match.chain.length - 1,
@@ -115,24 +80,25 @@ export function Canvas({
         line: n.line,
       })),
     ];
-    return {
-      nodes: data.map((d: Data, i: number) => ({
-        id: "n" + i,
-        type: "investigation",
-        position: { x: (i % 2) * 310, y: Math.floor(i / 2) * 195 },
-        data: d,
-      })),
-      edges: data.slice(1).map((_: Data, i: number) => ({
-        id: "e" + i,
-        source: "n" + i,
-        target: "n" + (i + 1),
-        animated: true,
-        style: { stroke: "var(--primary)", strokeWidth: 2 },
-      })),
-    };
   }, [match]);
-  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
-  useEffect(() => setNodes(graph.nodes), [graph, setNodes]);
+
+  const selectPathNode = (node: Data) => {
+    setSelection(
+      node.evidenceId
+        ? job!.evidence.find((e: Data) => e.id === node.evidenceId)
+        : {
+            ...node,
+            kind: "Code Context",
+            snippet: job!.evidence.find(
+              (e: Data) =>
+                ["Python AST", "PHP syntax"].includes(e.source) &&
+                e.content.file === node.file &&
+                e.content.line === node.line,
+            )?.content.code,
+          },
+    );
+    setTab("details");
+  };
   return (
     <div className="flex h-full min-h-0">
       <aside className="w-64 shrink-0 border-r bg-card flex flex-col">
@@ -186,11 +152,7 @@ export function Canvas({
         <div className="pane-heading">
           <div>
             <h2>{job?.event.name || "调查过程与攻击代码关联"}</h2>
-            <p>
-              {job
-                ? job.id
-                : "执行节点、证据、攻击路径与代码位置统一呈现"}
-            </p>
+            <p>{job ? job.id : "执行节点、证据、攻击路径与代码位置统一呈现"}</p>
           </div>
           <div className="flex gap-2 items-center">
             {job && <Badge value={job.status} />}
@@ -199,7 +161,9 @@ export function Canvas({
                 key={format}
                 size="sm"
                 variant={format === "docx" ? "default" : "outline"}
-                disabled={job?.status !== "completed" || job?.remediation_pending}
+                disabled={
+                  job?.status !== "completed" || job?.remediation_pending
+                }
                 onClick={() =>
                   run(async () => {
                     await window.desktop.exportReport(job!.id, format);
@@ -216,99 +180,106 @@ export function Canvas({
             ))}
           </div>
         </div>
-        <div className="flex gap-2 px-4 py-2 border-b items-center text-xs">
-          <Network size={14} className="text-primary" />
-          <span>
-            {job?.correlation?.summary ||
-              "节点将随调查结果生成；可拖动、缩放和检查"}
-          </span>
-          {job?.correlation?.matches?.length > 1 && (
-            <select
-              value={matchIndex}
-              onChange={(e) => {
-                setMatchIndex(Number(e.target.value));
-                setSelection(null);
-              }}
-            >
-              {job?.correlation.matches.map((m: Data, i: number) => (
-                <option key={i} value={i}>
-                  {m.finding.file}:{m.finding.line}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-        <div className="grow min-h-60 relative bg-background">
-          {match ? (
-            <ReactFlow
-              key={id + "-" + matchIndex}
-              nodes={nodes}
-              onNodesChange={onNodesChange}
-              edges={graph.edges}
-              nodeTypes={nodeTypes}
-              fitView
-              fitViewOptions={{ padding: 0.2 }}
-              colorMode={theme}
-              nodesDraggable={true}
-              nodesConnectable={false}
-              onNodeClick={(_, n) => {
-                const d = n.data as Data;
-                setSelection(
-                  d.evidenceId
-                    ? job!.evidence.find((e: Data) => e.id === d.evidenceId)
-                    : {
-                        ...d,
-                        kind: "Code Context",
-                        snippet: job!.evidence.find(
-                          (e: Data) =>
-                            ["Python AST", "PHP syntax"].includes(e.source) &&
-                            e.content.file === d.file &&
-                            e.content.line === d.line,
-                        )?.content.code,
-                      },
-                );
-                setTab("details");
-              }}
-            >
-              <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-              <Controls showInteractive={false} />
-              <MiniMap pannable zoomable nodeColor="var(--primary)" />
-            </ReactFlow>
-          ) : (
-            <div className="empty-canvas">
-              <Network size={42} />
+        <section className="chain-visual">
+          <div className="chain-heading">
+            <div>
+              <span className="eyebrow">ATTACK TO CODE CORRELATION</span>
               <h2>
-                {job?.correlation
-                  ? labels[job.correlation.verdict]
-                  : job?.status === "running"
-                    ? "正在收集证据与分析代码…"
-                    : "等待调查结果"}
+                <Network size={15} />
+                攻击路径与漏洞定位
               </h2>
               <p>
-                {job?.error ||
-                  job?.correlation?.summary ||
-                  "选择真实事件及对应代码仓库，启动 AI Investigation"}
+                {job?.correlation?.summary || "等待智能体收集证据并关联代码"}
               </p>
             </div>
-          )}
-        </div>
-        <section className="run-console">
-          <div className="flex items-center justify-between px-4 py-2 border-b text-xs">
-            <strong>执行记录 / RUN CONSOLE</strong>
-            <span>{job?.timeline?.length || 0} steps</span>
+            {job?.correlation?.matches?.length > 1 && (
+              <select
+                aria-label="关联漏洞"
+                value={matchIndex}
+                onChange={(e) => {
+                  setMatchIndex(Number(e.target.value));
+                  setSelection(null);
+                }}
+              >
+                {job?.correlation.matches.map((item: Data, index: number) => (
+                  <option key={index} value={index}>
+                    {item.finding.file}:{item.finding.line}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-          <div className="overflow-auto px-4 py-2 h-28">
-            {job?.timeline?.map((step: Data, i: number) => (
-              <div key={i} className="console-row investigation-step">
-                <CheckCircle2 size={12} />
-                <span>{String(i + 1).padStart(2, "0")}</span>
-                <h3>{step.agent || step.name}</h3>
-                <span>{step.tool}</span>
-                <span className="grow truncate">
-                  {step.note || step.description || step.summary}
-                </span>
-                <Badge value={step.status} />
+          {match ? (
+            <div className="attack-path">
+              {pathNodes.map((node: Data, index: number) => (
+                <div className="contents" key={index}>
+                  {index > 0 && (
+                    <span className="chain-arrow">
+                      <ChevronRight size={18} />
+                    </span>
+                  )}
+                  <button
+                    className={`chain-node ${node.sink ? "sink" : ""} ${selection?.label === node.label ? "active" : ""}`}
+                    onClick={() => selectPathNode(node)}
+                  >
+                    <span className="chain-step">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="chain-role">
+                      <FileCode2 size={13} />
+                      {node.role}
+                    </span>
+                    <strong>{node.label}</strong>
+                    <small>{node.location}</small>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="chain-empty">
+              <Network size={28} />
+              <div>
+                <h2>
+                  {job?.correlation
+                    ? labels[job.correlation.verdict]
+                    : job?.status === "running"
+                      ? "正在收集证据与分析代码…"
+                      : "等待调查结果"}
+                </h2>
+                <p>
+                  {job?.error ||
+                    job?.correlation?.summary ||
+                    "选择真实事件及对应代码仓库，启动 AI Investigation"}
+                </p>
               </div>
+            </div>
+          )}
+        </section>
+        <section className="investigation-timeline">
+          <div className="timeline-heading">
+            <div>
+              <span className="eyebrow">AGENT EXECUTION</span>
+              <h2>调查执行过程</h2>
+            </div>
+            <span>{job?.timeline?.length || 0} 个节点</span>
+          </div>
+          <div className="timeline-list">
+            {job?.timeline?.map((step: Data, i: number) => (
+              <article key={i} className="timeline-step investigation-step">
+                <span className="timeline-step-number">
+                  <CheckCircle2 size={14} />
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <h3>{step.agent || step.name}</h3>
+                  <p>{step.note || step.description || step.summary}</p>
+                  <small>
+                    {step.tool}
+                    {step.time ? ` · ${fmt(step.time)}` : ""}
+                  </small>
+                </div>
+                <Badge value={step.status} />
+              </article>
             ))}
             {job?.warnings?.map((w: string, i: number) => (
               <p className="text-amber-600 text-xs" key={i}>

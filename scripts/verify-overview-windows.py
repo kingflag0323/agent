@@ -62,8 +62,15 @@ try:
         page.get_by_role("button", name="思维链", exact=True).click()
         expect(page.get_by_role("heading", name="调查思维链", exact=True)).to_be_visible()
         expect(page.get_by_label("选择调查")).not_to_have_value("")
-        expect(page.get_by_text("执行记录 / RUN CONSOLE", exact=True)).to_be_visible()
+        expect(page.get_by_role("heading", name="调查执行过程", exact=True)).to_be_visible()
+        expect(page.locator(".chain-node").first).to_be_visible()
         page.screenshot(path=str(output / "installed-investigation-chain.png"))
+
+        page.get_by_role("button", name="代码审计", exact=True).click()
+        expect(page.get_by_role("heading", name="代码审计", exact=True)).to_be_visible()
+        expect(page.get_by_role("heading", name="漏洞清单", exact=True)).to_be_visible()
+        expect(page.locator(".audit-metrics article")).to_have_count(4)
+        page.screenshot(path=str(output / "installed-code-audit.png"))
 
         result = {
             "status": "passed",
@@ -77,7 +84,8 @@ try:
                 "trend and risk panels",
                 "light and dark themes",
                 "single investigation-chain navigation",
-                "merged graph and execution console",
+                "compact attack path and execution timeline",
+                "vulnerability-first code audit",
             ],
         }
         (output / "result.json").write_text(

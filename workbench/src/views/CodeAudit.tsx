@@ -1,70 +1,91 @@
-import { useEffect, useState } from "react";
-import { FolderOpen, FileCode2, Play, Plus, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  Bug,
+  FileWarning,
+  Play,
+  Plus,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import { api, Data } from "@/lib/api";
 import { Badge, Code, Empty } from "@/components/Common";
 import { Button } from "@/components/ui/button";
+
 export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
-  const [projects, setProjects] = useState<Data[]>([]),
-    [id, setId] = useState(""),
-    [files, setFiles] = useState<string[]>([]),
-    [file, setFile] = useState(""),
-    [code, setCode] = useState(""),
-    [scan, setScan] = useState<Data | null>(null),
-    [finding, setFinding] = useState<Data | null>(null),
-    [busy, setBusy] = useState(false),
-    [add, setAdd] = useState(false),
-    [name, setName] = useState(""),
-    [source, setSource] = useState("git"),
-    [path, setPath] = useState(""),
-    [branch, setBranch] = useState("");
+  const [projects, setProjects] = useState<Data[]>([]);
+  const [id, setId] = useState("");
+  const [scan, setScan] = useState<Data | null>(null);
+  const [finding, setFinding] = useState<Data | null>(null);
+  const [query, setQuery] = useState("");
+  const [severity, setSeverity] = useState("all");
+  const [busy, setBusy] = useState(false);
+  const [add, setAdd] = useState(false);
+  const [name, setName] = useState("");
+  const [source, setSource] = useState("git");
+  const [path, setPath] = useState("");
+  const [branch, setBranch] = useState("");
+
   const refresh = async () => {
-    const ps = await api("/projects");
-    setProjects(ps);
-    if (!id && ps.length) setId(ps[0].id);
+    const rows = await api("/projects");
+    setProjects(rows);
+    if (!id && rows.length) setId(rows[0].id);
   };
+
   useEffect(() => {
     run(refresh);
   }, []);
+
   useEffect(() => {
     if (!id) return;
     let valid = true;
     setFinding(null);
-    setFile("");
-    setCode("");
+    setQuery("");
+    setSeverity("all");
     run(async () => {
-      const [fs, s] = await Promise.all([
-        api("/projects/" + id + "/files"),
-        api("/projects/" + id + "/scan"),
-      ]);
-      if (valid) {
-        setFiles(fs.files);
-        setScan(s);
-        if (fs.files.length) setFile(fs.files[0]);
-      }
+      const result = await api("/projects/" + id + "/scan");
+      if (valid) setScan(result);
     });
     return () => {
       valid = false;
     };
   }, [id]);
-  useEffect(() => {
-    if (!id || !file) return;
-    let valid = true;
-    run(async () => {
-      const r = await api(
-        "/projects/" + id + "/file?path=" + encodeURIComponent(file),
-      );
-      if (valid) setCode(r.content);
+
+  const findings = (scan?.findings || []) as Data[];
+  const visibleFindings = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return findings.filter((item) => {
+      const severityMatches = severity === "all" || item.severity === severity;
+      const text = [item.rule, item.type, item.cwe, item.file, item.function]
+        .join(" ")
+        .toLowerCase();
+      return severityMatches && (!needle || text.includes(needle));
     });
-    return () => {
-      valid = false;
-    };
-  }, [id, file]);
+  }, [findings, query, severity]);
+  const highCount = findings.filter((item) =>
+    ["critical", "high"].includes(item.severity),
+  ).length;
+  const affectedFiles = new Set(findings.map((item) => item.file)).size;
+
+  const runScan = () =>
+    run(async () => {
+      setBusy(true);
+      try {
+        const result = await api("/projects/" + id + "/scan", "POST");
+        setScan(result);
+        setFinding(result.findings?.[0] || null);
+      } finally {
+        setBusy(false);
+      }
+    });
+
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="pane-heading">
+    <div className="audit-page">
+      <header className="audit-header">
         <div>
-          <h2>代码安全工作区</h2>
-          <p>仓库、静态发现和不可变扫描证据</p>
+          <span className="eyebrow">STATIC APPLICATION SECURITY TESTING</span>
+          <h2>代码审计</h2>
+          <p>按风险集中审阅漏洞、受影响代码和修复建议</p>
         </div>
         <div className="flex gap-2">
           <select
@@ -72,9 +93,9 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
             value={id}
             onChange={(e) => setId(e.target.value)}
           >
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
               </option>
             ))}
           </select>
@@ -82,140 +103,208 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
             <Plus size={14} />
             导入项目
           </Button>
-          <Button
-            size="sm"
-            disabled={!id || busy}
-            onClick={() =>
-              run(async () => {
-                setBusy(true);
-                try {
-                  setScan(await api("/projects/" + id + "/scan", "POST"));
-                  setFinding(null);
-                } finally {
-                  setBusy(false);
-                }
-              })
-            }
-          >
+          <Button size="sm" disabled={!id || busy} onClick={runScan}>
             <Play size={14} />
             {busy ? "扫描中…" : "运行扫描"}
           </Button>
         </div>
-      </div>
-      <div className="flex min-h-0 grow">
-        <aside className="w-60 border-r bg-card overflow-auto">
-          <div className="p-4 flex gap-2 items-center text-xs text-muted-foreground">
-            <FolderOpen size={15} />
-            SOURCE EXPLORER · {files.length}
+      </header>
+
+      <section className="audit-metrics">
+        <article>
+          <Bug />
+          <div>
+            <span>漏洞总数</span>
+            <strong>{findings.length}</strong>
           </div>
-          {files.map((f) => (
-            <button
-              className={"file-item " + (file === f ? "selected" : "")}
-              key={f}
-              onClick={() => {
-                setFile(f);
-                setFinding(null);
-              }}
-            >
-              <FileCode2 size={14} />
-              <span>{f}</span>
-            </button>
-          ))}
-        </aside>
-        <div className="grow min-w-0 flex flex-col">
-          <div className="p-3 border-b text-xs text-muted-foreground flex gap-3">
-            <FileCode2 size={14} />
-            {finding
-              ? finding.file + " · 扫描证据快照"
-              : file + " · 当前工作目录"}
+        </article>
+        <article className="risk">
+          <AlertTriangle />
+          <div>
+            <span>高风险</span>
+            <strong>{highCount}</strong>
           </div>
-          <div className="grow min-h-0 overflow-auto">
-            {file ? (
-              <Code
-                code={finding ? finding.code : code}
-                start={finding?.code_start || 1}
-                line={finding?.line}
-              />
-            ) : (
-              <Empty text="选择源文件" />
-            )}
+        </article>
+        <article>
+          <FileWarning />
+          <div>
+            <span>受影响文件</span>
+            <strong>{affectedFiles}</strong>
           </div>
-          <section className="border-t bg-card h-[280px] overflow-auto">
-            <div className="px-4 py-3 flex justify-between">
-              <h2>静态发现 · {scan?.findings?.length || 0}</h2>
-              {scan && <Badge value={scan.status} />}
+        </article>
+        <article>
+          <ShieldCheck />
+          <div>
+            <span>已扫描文件</span>
+            <strong>{scan?.file_count || 0}</strong>
+            <small>
+              Python {scan?.python_files || 0} · PHP {scan?.php_files || 0}
+            </small>
+          </div>
+        </article>
+      </section>
+
+      <div className="audit-layout">
+        <section className="audit-findings">
+          <div className="audit-toolbar">
+            <div>
+              <h3>漏洞清单</h3>
+              <p>
+                {scan
+                  ? `${visibleFindings.length} / ${findings.length} 项发现 · ${scan.scanner}`
+                  : "运行扫描后生成不可变证据快照"}
+              </p>
             </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>规则 / 类型</th>
-                  <th>风险</th>
-                  <th>CWE</th>
-                  <th>文件 / 行号</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scan?.findings?.map((f: Data) => (
-                  <tr
-                    key={f.id}
-                    onClick={() => {
-                      setFile(f.file);
-                      setFinding(f);
-                    }}
-                    className={finding?.id === f.id ? "selected" : ""}
-                  >
-                    <td>
-                      {f.rule} · {f.type}
-                    </td>
-                    <td>
-                      <Badge value={f.severity} />
-                    </td>
-                    <td>{f.cwe}</td>
-                    <td>
-                      {f.file}:{f.line}
-                    </td>
+            <div className="flex gap-2">
+              <input
+                aria-label="搜索漏洞"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="搜索规则、CWE、文件…"
+              />
+              <select
+                aria-label="漏洞等级"
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value)}
+              >
+                <option value="all">全部风险</option>
+                <option value="critical">严重</option>
+                <option value="high">高危</option>
+                <option value="medium">中危</option>
+                <option value="low">低危</option>
+              </select>
+            </div>
+          </div>
+          {scan && (
+            <div className="audit-risk-strip">
+              <Badge value={scan.status} />
+              <span>
+                扫描快照 {String(scan.id || "").replace("scan-", "#")}
+              </span>
+              <span>{scan.created_at}</span>
+            </div>
+          )}
+          <div className="audit-table-wrap">
+            {scan ? (
+              <table>
+                <thead>
+                  <tr>
+                    <th>风险</th>
+                    <th>漏洞 / 规则</th>
+                    <th>位置</th>
+                    <th>置信度</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {scan?.errors?.map((e: Data, i: number) => (
-              <p key={i} className="p-2 text-destructive">
-                {e.file}: {e.error}
+                </thead>
+                <tbody>
+                  {visibleFindings.map((item) => (
+                    <tr
+                      key={item.id}
+                      className={finding?.id === item.id ? "selected" : ""}
+                      onClick={() => setFinding(item)}
+                    >
+                      <td>
+                        <Badge value={item.severity} />
+                      </td>
+                      <td>
+                        <strong>{item.type}</strong>
+                        <small>
+                          {item.rule} · {item.cwe}
+                        </small>
+                      </td>
+                      <td className="audit-location">
+                        {item.file}
+                        <small>
+                          第 {item.line} 行 · {item.function}()
+                        </small>
+                      </td>
+                      <td>
+                        <Badge value={item.confidence} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <Empty text="此项目尚未扫描，点击“运行扫描”开始代码审计" />
+            )}
+            {scan && visibleFindings.length === 0 && (
+              <Empty text="没有符合当前筛选条件的漏洞" />
+            )}
+            {scan?.errors?.map((error: Data, index: number) => (
+              <p key={index} className="p-3 text-xs text-destructive">
+                {error.file}: {error.error}
               </p>
             ))}
-            {!scan && <Empty text="尚未扫描此项目" />}
-          </section>
-        </div>
-        <aside className="inspector w-72 p-4 space-y-4">
-          <h2>Finding Inspector</h2>
+          </div>
+        </section>
+
+        <aside className="audit-detail inspector">
           {finding ? (
             <>
-              <Badge value="Static Finding" />
-              <h3>{finding.type}</h3>
-              <Badge value={finding.cwe} />
-              <p className="text-xs break-all">
-                {finding.rule} · {finding.file}:{finding.line}
-              </p>
-              <small>{finding.source}</small>
-              <p>{finding.description}</p>
-              <h3>修复建议</h3>
-              <p>{finding.fix}</p>
-              {finding.patch && <Code code={finding.patch} />}
-              <small className="break-all block">
-                SHA-256 · {finding.file_sha256}
-              </small>
+              <div className="audit-detail-heading">
+                <div>
+                  <Badge value={finding.severity} />
+                  <Badge value={finding.cwe} />
+                </div>
+                <h2>{finding.type}</h2>
+                <p>
+                  {finding.rule} · {finding.source}
+                </p>
+              </div>
+              <div className="audit-detail-body">
+                <dl className="details">
+                  <dt>漏洞位置</dt>
+                  <dd>
+                    {finding.file}:{finding.line}
+                  </dd>
+                  <dt>所在函数</dt>
+                  <dd>{finding.function}()</dd>
+                  <dt>置信度</dt>
+                  <dd>
+                    <Badge value={finding.confidence} />
+                  </dd>
+                </dl>
+                <div>
+                  <h3>问题描述</h3>
+                  <p>{finding.description}</p>
+                </div>
+                <div>
+                  <h3>漏洞代码</h3>
+                  <div className="audit-code-preview">
+                    <Code
+                      code={finding.code}
+                      start={finding.code_start || 1}
+                      line={finding.line}
+                    />
+                  </div>
+                </div>
+                <div className="audit-fix">
+                  <h3>修复建议</h3>
+                  <p>{finding.fix}</p>
+                </div>
+                {finding.patch && (
+                  <details>
+                    <summary>查看修复示例</summary>
+                    <div className="audit-patch-preview">
+                      <Code code={finding.patch} />
+                    </div>
+                  </details>
+                )}
+                <small className="break-all">
+                  文件 SHA-256 · {finding.file_sha256}
+                </small>
+              </div>
             </>
           ) : (
-            <>
-              <p>选中静态发现查看代码快照与修复建议。</p>
-              <p>
-                仓库只做静态读取，不执行代码、依赖或 hook。当前语义分析支持
-                Python 与 PHP（有限语法和数据传播规则）。
-              </p>
-            </>
+            <div className="audit-detail-empty">
+              <ShieldCheck size={34} />
+              <h2>选择一项漏洞</h2>
+              <p>右侧仅展示与漏洞有关的代码片段、检测依据和修复建议。</p>
+            </div>
           )}
         </aside>
       </div>
+
       {add && (
         <div className="modal-backdrop">
           <div role="dialog" aria-label="导入代码项目" className="modal">
@@ -253,8 +342,8 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
                     variant="outline"
                     onClick={() =>
                       run(async () => {
-                        const p = await window.desktop.chooseFolder();
-                        if (p) setPath(p);
+                        const selected = await window.desktop.chooseFolder();
+                        if (selected) setPath(selected);
                       })
                     }
                   >
@@ -282,7 +371,7 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
                 run(async () => {
                   setBusy(true);
                   try {
-                    const p =
+                    const project =
                       source === "zip"
                         ? await window.desktop.importZip(name)
                         : await api("/projects", "POST", {
@@ -292,9 +381,9 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
                             git_url: source === "git" ? path : "",
                             branch,
                           });
-                    if (p) {
+                    if (project) {
                       await refresh();
-                      setId(p.id);
+                      setId(project.id);
                       setAdd(false);
                     }
                   } finally {
