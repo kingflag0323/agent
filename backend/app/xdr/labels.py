@@ -16,7 +16,9 @@ def attack_label(event):
     if names:return TRANSLATIONS.get(names[0].lower(), ' / '.join(names))
     tags = readable(raw.get('riskTag'))
     tags = [t for t in tags if t not in ('异常操作','疑似业务误报','业务误报')]
-    if len(tags)==1:return tags[0]
+    # XDR orders riskTag by the event's primary detection signal.  Prefer that
+    # concrete label over a broader threat definition such as "定向攻击".
+    if tags:return tags[0]
     names = readable(raw.get('threatDefineName'))
     names = [n for n in names if n != '未知威胁']
     if names:return ' / '.join(names)

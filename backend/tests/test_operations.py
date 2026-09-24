@@ -159,7 +159,8 @@ def test_deepseek_thinking_and_bounded_valid_context(monkeypatch):
 def test_attack_labels_use_platform_text_without_guessing_numeric_codes():
     from app.xdr.labels import attack_label
     assert attack_label({'attack_type':'020307','raw':{'riskTag':['SQL注入','疑似业务误报']}})=='SQL注入'
-    assert attack_label({'attack_type':'020201','raw':{'riskTag':['SQL注入','命令执行'],'threatDefineName':['定向攻击']}})=='定向攻击'
+    assert attack_label({'attack_type':'020201','raw':{'riskTag':['SQL注入','命令执行'],'threatDefineName':['定向攻击']}})=='SQL注入'
+    assert attack_label({'attack_type':'019906','raw':{'riskTag':['蠕虫','普通病毒'],'threatDefineName':['病毒']}})=='蠕虫'
     assert attack_label({'attack_type':'020404','raw':{'incidentThreatTypeName':'SSH 暴力破解'}})=='SSH 暴力破解'
     assert attack_label({'attack_type':'999999','raw':{}})=='未分类威胁'
     assert attack_label({'attack_type':'SQL Injection'})=='SQL 注入'
