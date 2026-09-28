@@ -17,12 +17,20 @@ FIXES={
  'B506':('Unsafe Deserialization','CWE-502','使用 yaml.safe_load 并限制输入大小。',''),
 }
 
-def scan(project,config):
+def source_snapshot(project,config):
     root=allowed_root(project['path']);files,skipped=source_files(root,int(config['max_files']),int(config['max_file_kb']))
     sources={p.relative_to(root).as_posix():p.read_text(encoding='utf-8',errors='replace') for p in files}
-    index=index_sources(sources)
     hashes={file:hashlib.sha256(code.encode()).hexdigest() for file,code in sources.items()}
     snapshot=hashlib.sha256(json.dumps(hashes,sort_keys=True).encode()).hexdigest()
+    return root,files,skipped,sources,hashes,snapshot
+
+def is_current(project,record,config):
+    try:return bool(record) and source_snapshot(project,config)[-1]==record.get('snapshot')
+    except (OSError,ValueError):return False
+
+def scan(project,config):
+    root,files,skipped,sources,hashes,snapshot=source_snapshot(project,config)
+    index=index_sources(sources)
     with tempfile.TemporaryDirectory(prefix='sxf-scan-') as tmp:
         workspace=Path(tmp)/'source';workspace.mkdir()
         for file,code in sources.items():
@@ -49,6 +57,25 @@ def scan(project,config):
     php=analyze_php(sources,hashes)
     findings.extend(php['findings']);errors.extend(php['errors'])
     scan_id='scan-'+uuid.uuid4().hex[:12]
-    output={'id':scan_id,'project_id':project['id'],'created_at':store.now(),'status':'partial' if index['errors'] or errors else 'completed','scanner':'Bandit + Python AST + Tree-sitter PHP','findings':findings,'index':index,'snapshot':snapshot,'sources':sources,'hashes':hashes,'file_count':len(files),'php_files':php['php_files'],'python_files':sum(f.endswith('.py') for f in sources),'skipped':skipped,'errors':index['errors']+errors,'limitations':['当前语义路由与调用图仅支持 Python 直接装饰器及可解析的函数导入；不等价于完整跨函数污点证明。','其他语言可浏览，但未运行 SAST。装饰器前缀、动态调用与多态可能无法解析。']+php['limitations']}
+    output={'id':scan_id,'project_id':project['id'],'created_at':store.now(),'status':'partial' if index['errors'] or errors else 'completed','scanner':'Bandit + Python AST + Tree-sitter PHP','findings':findings,'static_findings_count':len(findings),'ai_findings_count':0,'ai_confirmed_count':0,'ai_audit':{'status':'not_run','model':''},'index':index,'snapshot':snapshot,'sources':sources,'hashes':hashes,'file_count':len(files),'php_files':php['php_files'],'python_files':sum(f.endswith('.py') for f in sources),'skipped':skipped,'errors':index['errors']+errors,'limitations':['当前语义路由与调用图仅支持 Python 直接装饰器及可解析的函数导入；不等价于完整跨函数污点证明。','其他语言由大模型进行受限代码审计；模型发现必须人工复核。装饰器前缀、动态调用与多态可能无法解析。']+php['limitations']}
     store.put('scans',output);project['last_scan_id']=scan_id;project['file_count']=len(files);store.put('projects',project)
     return output
+
+async def audit(project,audit_config,llm_config):
+    import asyncio
+    from app.llm.code_audit import review,merge
+    result=await asyncio.to_thread(scan,project,audit_config)
+    ai=await review(result,llm_config,audit_config)
+    merged,added,confirmed=merge(result['findings'],ai.pop('findings'),ai.get('model',''))
+    result['findings']=merged
+    result['ai_findings_count']=added
+    result['ai_confirmed_count']=confirmed
+    result['ai_audit']=ai
+    if ai['status'] in ('completed','partial'):
+        result['scanner']='Bandit + Python AST + Tree-sitter PHP + AI Code Audit'
+    if ai['status']=='failed':
+        result['status']='partial'
+        result['limitations'].append('大模型代码审计失败；本次记录仅包含规则扫描结果。')
+    store.put('scans',result)
+    project['last_scan_id']=result['id'];store.put('projects',project)
+    return result

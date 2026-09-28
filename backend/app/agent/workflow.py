@@ -3,7 +3,6 @@ import copy
 import traceback
 from app.database import store
 from app.xdr.adapter import XDRAdapter
-from app.code_analysis.scanner import scan
 from app.correlation.engine import correlate
 from app.agent.evidence import collect, evidence
 from app.llm.provider import LLMProvider
@@ -35,19 +34,27 @@ class Workflow:
         self.job['target_ips']=destination_ips(bundle['alerts'])
         self.job['target_assets']=[{k:a.get(k) for k in ('id','name','host','project_id','web_path','web_url')} for a in store.all_rows('assets') if a['host'] in self.job['target_ips']]
         self.job['evidence']=collect(bundle); self.job['warnings']=bundle['warnings'];self.save()
-        result=await self.step('Static analysis','bandit + ast + php','生成代码快照，运行 Bandit / PHP 规则与语法分析',lambda:asyncio.to_thread(scan,project,cfg['audit']))
+        async def code_audit():
+            from app.code_analysis import scanner
+            saved=store.get('scans',project.get('last_scan_id',''))
+            current=await asyncio.to_thread(scanner.is_current,project,saved,cfg['audit']) if saved else False
+            ai_ready=saved and (cfg['llm']['mode']=='mock' or saved.get('ai_audit',{}).get('status') in ('completed','partial'))
+            if current and ai_ready:return {**saved,'reused':True}
+            return await scanner.audit(project,cfg['audit'],cfg['llm'])
+        result=await self.step('Code audit','stored scan / sast + llm','校验源码快照，优先加载数据库审计结果；必要时运行规则与大模型扫描',code_audit)
         self.job['scan_id']=result['id'];self.job['snapshot']=result['snapshot']
+        self.job['code_audit_reused']=bool(result.get('reused'))
         if result['errors']:self.job['warnings'].append(f"扫描有 {len(result['errors'])} 个文件错误，结论仅覆盖成功分析的文件")
         if not result['python_files'] and not result.get('php_files'):self.job['warnings'].append('当前项目无受支持的 Python / PHP 文件；未对其他语言执行 SAST')
         for f in result['findings']:
-            self.job['evidence'].append(evidence('Static Finding',f['source'],f['type']+' · '+f['file']+':'+str(f['line']),f,'scan:'+result['id']))
+            self.job['evidence'].append(evidence(f.get('kind','Static Finding'),f['source'],f['type']+' · '+f['file']+':'+str(f['line']),f,'scan:'+result['id']))
         async def correlate_code():
             assets=[a for a in self.job['target_assets'] if a.get('project_id')==project['id']]
             prefix=assets[0].get('web_path','/') if len(assets)==1 else '/'
             return correlate(event,self.job['evidence'],result,prefix)
         correlation=await self.step('Attack → Code','find_route / get_call_context','验证 HTTP 路由、类型匹配及跨文件静态可达性',correlate_code)
         for m in correlation['matches']:
-            finding_ev=next(e for e in self.job['evidence'] if e['kind']=='Static Finding' and e['content']['id']==m['finding']['id'])
+            finding_ev=next(e for e in self.job['evidence'] if e['kind'] in ('Static Finding','AI Finding') and e['content']['id']==m['finding']['id'])
             m['evidence_ids'].append(finding_ev['id'])
             for f in m['chain']:
                 code=result['sources'][f['file']];lines=code.splitlines()

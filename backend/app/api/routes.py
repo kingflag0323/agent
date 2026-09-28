@@ -145,7 +145,8 @@ def file_content(id:str,path:str): return {'path':path,'content':projects.read_f
 
 @router.post('/projects/{id}/scan')
 async def scan_project(id:str):
-    result=await asyncio.to_thread(scanner.scan,required('projects',id),settings.load()['audit'])
+    cfg=settings.load()
+    result=await scanner.audit(required('projects',id),cfg['audit'],cfg['llm'])
     return {k:v for k,v in result.items() if k!='sources'}
 
 @router.get('/projects/{id}/scan')

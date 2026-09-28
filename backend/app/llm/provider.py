@@ -22,13 +22,14 @@ def bounded_context(context):
 
 class LLMProvider:
     def __init__(self, config): self.config=config
-    async def analyze(self,context):
+    async def complete(self,system,context,json_mode=False,max_tokens=None,bound=True):
         c=self.config
-        if c['mode']=='mock':
-            return {'provider':'mock','kind':'AI Inference','text':'离线规则模式：未调用外部大模型。关联结果来自实际执行的 Python / PHP 静态扫描及语法关联。静态可达性支持漏洞候选定位，但不能证明此次攻击执行成功。建议检查部署版本与运行时数据库审计，再验证修复。','verified':False}
+        if c['mode']=='mock': raise ValueError('当前为离线规则模式，未调用外部大模型')
         if not c['base_url'] or not c['model']: raise ValueError('请配置 LLM Base URL 和 Model')
         headers={'Authorization':'Bearer '+c['api_key']} if c['api_key'] else {}
-        body={'model':c['model'],'temperature':c['temperature'],'max_tokens':int(c['max_tokens']),'messages':[{'role':'system','content':SYSTEM},{'role':'user','content':json.dumps(bounded_context(context),ensure_ascii=False)}]}
+        payload=bounded_context(context) if bound else context
+        body={'model':c['model'],'temperature':c['temperature'],'max_tokens':int(max_tokens or c['max_tokens']),'messages':[{'role':'system','content':system},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]}
+        if json_mode: body['response_format']={'type':'json_object'}
         if urlsplit(c['base_url']).hostname=='api.deepseek.com':
             mode=c.get('thinking_mode','auto')
             body['thinking']={'type':'disabled' if mode=='auto' else mode}
@@ -40,4 +41,12 @@ class LLMProvider:
                 text=choice['message']['content']
                 if not isinstance(text,str) or not text.strip(): raise ValueError('模型未输出正文；请关闭思考模式或提高输出额度')
         except (httpx.HTTPError,KeyError,IndexError,TypeError): raise ValueError('模型连接失败或响应格式不符合兼容协议') from None
-        return {'provider':'compatible','model':c['model'],'kind':'AI Inference','text':text[:18000],'verified':False,'finish_reason':choice.get('finish_reason'),'truncated':choice.get('finish_reason')=='length'}
+        return {'text':text[:24000],'finish_reason':choice.get('finish_reason'),'truncated':choice.get('finish_reason')=='length'}
+
+    async def analyze(self,context):
+        c=self.config
+        if c['mode']=='mock':
+            return {'provider':'mock','kind':'AI Inference','text':'离线规则模式：未调用外部大模型。关联结果来自实际执行的 Python / PHP 静态扫描及语法关联。静态可达性支持漏洞候选定位，但不能证明此次攻击执行成功。建议检查部署版本与运行时数据库审计，再验证修复。','verified':False}
+        result=await self.complete(SYSTEM,context)
+        text=result['text'];choice_reason=result['finish_reason']
+        return {'provider':'compatible','model':c['model'],'kind':'AI Inference','text':text[:18000],'verified':False,'finish_reason':choice_reason,'truncated':result['truncated']}

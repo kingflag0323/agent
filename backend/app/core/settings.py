@@ -42,7 +42,7 @@ def save(body):
         if '\r' in text or '\n' in text: raise ValueError('认证字段不能包含换行')
     if not 0 <= s['llm']['temperature'] <= 2 or not 100 <= s['llm']['max_tokens'] <= 8000: raise ValueError('LLM 参数超出范围')
     if not 5 <= s['agent']['max_steps'] <= 50 or not 10 <= s['agent']['timeout'] <= 600: raise ValueError('Agent 参数超出范围')
-    if not 1 <= s['audit']['max_files'] <= 2000 or not 1 <= s['audit']['max_file_kb'] <= 1024 or not 5 <= s['audit']['timeout'] <= 120: raise ValueError('扫描参数超出范围')
+    if not 1 <= s['audit']['max_files'] <= 2000 or not 1 <= s['audit']['max_file_kb'] <= 1024 or not 5 <= s['audit']['timeout'] <= 120 or not 1 <= s['audit']['llm_max_chunks'] <= 200 or not 4000 <= s['audit']['llm_batch_chars'] <= 60000: raise ValueError('扫描参数超出范围')
     if s['ti']['provider'] not in ('cisa','nvd'):raise ValueError('情报源仅支持 CISA / NVD')
     if not 1<=s['ti']['interval_hours']<=168 or not 1<=s['ti']['lookback_days']<=30:raise ValueError('情报同步间隔 1–168 小时，回溯 1–30 天')
     from pathlib import Path

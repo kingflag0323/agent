@@ -15,5 +15,5 @@ DEFAULTS = {
     'agent': {'max_steps': 20, 'timeout': 120, 'reviewer': True, 'debug': False},
     'workspace': {'working_directory': str(REPOS), 'report_directory': str(DATA/'reports')},
     'ti': {'enabled': False, 'provider': 'cisa', 'api_key': '', 'interval_hours': 6, 'lookback_days': 7},
-    'audit': {'max_files': 1000, 'max_file_kb': 512, 'timeout': 45},
+    'audit': {'max_files': 1000, 'max_file_kb': 512, 'timeout': 45, 'llm_enabled': True, 'llm_max_chunks': 48, 'llm_batch_chars': 24000},
 }

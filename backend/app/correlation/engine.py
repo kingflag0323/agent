@@ -44,7 +44,7 @@ def correlate(event,evidence,scan,web_path="/"):
                 chain=call_path(scan['index'],route['function_id'],finding['file'],finding['line'])
                 if not chain: continue
                 params=sorted(set(entry['parameters']) & set(route['parameters']))
-                reasons=[f"HTTP 路径 {entry['path']} 与装饰器路由完全匹配",f"AST 可解析调用链到达 {finding['file']}:{finding['line']}",f"Bandit {finding['rule']} 报告 {finding['cwe']}，与攻击类别一致"]
+                reasons=[f"HTTP 路径 {entry['path']} 与装饰器路由完全匹配",f"AST 可解析调用链到达 {finding['file']}:{finding['line']}",f"{finding['source']} / {finding['rule']} 报告 {finding['cwe']}，与攻击类别一致"]
                 if params: reasons.append('请求参数与入口函数参数匹配：'+', '.join(params))
                 matches.append({'finding':finding,'entry':entry,'route':route,'chain':chain,'confidence':'high' if params and entry['method'] and entry['direct_alert'] else 'medium','reasons':reasons,'evidence_ids':[entry['evidence_id']],'kind':'AI Inference','method':'deterministic AST + SAST correlation','limitations':['调用图可达性不是完整污点证明；需人工检查沿途校验与清洗。','尚未验证线上部署版本与此代码快照一致。','HTTP 状态码和静态漏洞不能证明这次利用成功。']})
     for entry in entries:
@@ -59,4 +59,4 @@ def correlate(event,evidence,scan,web_path="/"):
         key=m['finding']['id']
         if key not in dedup or m['confidence']=='high': dedup[key]=m
     matches=list(dedup.values())
-    return {'attack_type':kind,'entries':entries,'matched_routes':candidates,'matches':matches,'verdict':'likely_vulnerable_path' if matches else 'insufficient_evidence','confidence':matches[0]['confidence'] if matches else 'low','summary':f'发现 {len(matches)} 处与攻击入口可达且类型一致的漏洞候选，需人工确认实际利用。' if matches else '未找到足够证据将该事件关联到漏洞代码；不等于项目不存在漏洞。','method':'规则分类 + HTTP 入口精确匹配 + Python AST / PHP 语法规则 + SAST'}
+    return {'attack_type':kind,'entries':entries,'matched_routes':candidates,'matches':matches,'verdict':'likely_vulnerable_path' if matches else 'insufficient_evidence','confidence':matches[0]['confidence'] if matches else 'low','summary':f'发现 {len(matches)} 处与攻击入口可达且类型一致的漏洞候选，需人工确认实际利用。' if matches else '未找到足够证据将该事件关联到漏洞代码；不等于项目不存在漏洞。','method':'规则分类 + HTTP 入口精确匹配 + 持久化代码审计（SAST / AI）+ Python AST / PHP 语法关联'}

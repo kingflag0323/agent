@@ -44,6 +44,7 @@ export const labels: Record<string, string> = {
   interrupted: "已中断",
   demo: "演示数据",
   live: "真实 XDR",
+  "AI Finding": "AI 发现",
   likely_vulnerable_path: "找到可能被利用的代码路径",
   insufficient_evidence: "证据不足，未建立漏洞关联",
 };

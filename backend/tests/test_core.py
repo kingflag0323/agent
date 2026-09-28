@@ -10,6 +10,7 @@ from app.core.config import ROOT,DEFAULTS,DATA
 from app.database import store
 from app.agent.workflow import run_job
 from app.code_analysis.scanner import scan
+from app.code_analysis import scanner
 from app.code_analysis.projects import import_zip,read_file
 from app.xdr.adapter import XDRAdapter,normalize,CAPABILITIES,XDRError
 from app.agent.evidence import collect
@@ -116,6 +117,27 @@ def test_llm_contract_and_failure(monkeypatch,client):
     original=httpx.AsyncClient;monkeypatch.setattr(httpx,'AsyncClient',lambda **kwargs:original(transport=httpx.MockTransport(handler),**kwargs))
     cfg={**DEFAULTS['llm'],'mode':'compatible','base_url':'https://model.test/v1','model':'test-model','api_key':'example'}
     result=asyncio.run(LLMProvider(cfg).analyze({'evidence':'untrusted source'}));assert result['kind']=='AI Inference';assert result['verified'] is False;assert 'untrusted DATA' in calls[0]['messages'][0]['content']
+
+def test_llm_code_audit_is_validated_and_persisted(monkeypatch,client):
+    calls=[]
+    def handler(req):
+        body=json.loads(req.content);calls.append(body)
+        content=json.dumps({'findings':[{'file':'repository.py','line':6,'type':'SQL Injection','cwe':'CWE-89','severity':'high','confidence':'high','description':'请求参数拼接进入 SQL 查询','fix':'使用参数化查询'},{'file':'missing.py','line':999,'type':'Fake','cwe':'CWE-1','severity':'critical','confidence':'high','description':'不存在的代码','fix':'none'}]})
+        return httpx.Response(200,json={'choices':[{'message':{'content':content},'finish_reason':'stop'}]})
+    original=httpx.AsyncClient;monkeypatch.setattr(httpx,'AsyncClient',lambda **kwargs:original(transport=httpx.MockTransport(handler),**kwargs))
+    cfg={**DEFAULTS['llm'],'mode':'compatible','base_url':'https://model.test/v1','model':'audit-model','api_key':'example','max_tokens':1500}
+    project=store.get('projects','demo-shop');result=asyncio.run(scanner.audit(project,DEFAULTS['audit'],cfg))
+    assert result['ai_audit']['status']=='completed';assert result['ai_confirmed_count']==1;assert result['ai_findings_count']==0
+    assert any(f.get('ai_confirmed') and f['file']=='repository.py' for f in result['findings'])
+    assert not any(f['file']=='missing.py' for f in result['findings'])
+    assert store.get('scans',result['id'])['ai_audit']['model']=='audit-model'
+    assert store.get('projects','demo-shop')['last_scan_id']==result['id'];assert scanner.is_current(project,result,DEFAULTS['audit'])
+    assert calls and calls[0]['response_format']=={'type':'json_object'} and 'untrusted DATA' in calls[0]['messages'][0]['content']
+
+def test_investigation_reuses_persisted_current_scan(client):
+    project=store.get('projects','demo-shop');saved=scan(project,DEFAULTS['audit'])
+    job=create_job('demo-001')
+    assert job['status']=='completed';assert job['scan_id']==saved['id'];assert job['code_audit_reused'] is True
 
 def test_nested_package_paths_are_portable(client):
     b=io.BytesIO()

@@ -71,7 +71,7 @@ try:
         page.get_by_role("button", name="代码审计", exact=True).click()
         expect(page.get_by_role("heading", name="代码审计", exact=True)).to_be_visible()
         expect(page.get_by_role("heading", name="漏洞清单", exact=True)).to_be_visible()
-        expect(page.locator(".audit-metrics article")).to_have_count(4)
+        expect(page.locator(".audit-metrics article")).to_have_count(5)
         page.screenshot(path=str(output / "installed-code-audit.png"))
 
         result = {

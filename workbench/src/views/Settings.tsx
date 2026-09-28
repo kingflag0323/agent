@@ -51,6 +51,9 @@ const fields: Record<string, any[]> = {
     ["max_files", "最大文件数", "number"],
     ["max_file_kb", "单文件 KB", "number"],
     ["timeout", "超时（秒）", "number"],
+    ["llm_enabled", "启用大模型代码审计", "bool"],
+    ["llm_max_chunks", "模型最大代码分块", "number"],
+    ["llm_batch_chars", "每批最大字符数", "number"],
   ],
 };
 export function Settings({

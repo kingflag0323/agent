@@ -1,0 +1,18 @@
+{
+  "validated_at": "2026-09-28T02:16:19.617614+00:00",
+  "project": "pikachu",
+  "scan_id": "scan-58cb36400a2d",
+  "snapshot": "46d1322608f8aa865e02aa8896be178fd473d907aa64e916b4af265e525fc56a",
+  "status": "completed",
+  "scanner": "Bandit + Python AST + Tree-sitter PHP + AI Code Audit",
+  "model": "deepseek-flash",
+  "files_in_project": 180,
+  "chunks_analyzed": 48,
+  "batches": 5,
+  "static_findings": 35,
+  "ai_confirmed": 20,
+  "ai_new_findings": 15,
+  "total_findings": 50,
+  "persisted": true,
+  "persistence_key": "projects.last_scan_id -> scans.id"
+}

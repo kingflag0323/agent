@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Bug,
+  BrainCircuit,
   FileWarning,
   Play,
   Plus,
@@ -83,9 +84,9 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
     <div className="audit-page">
       <header className="audit-header">
         <div>
-          <span className="eyebrow">STATIC APPLICATION SECURITY TESTING</span>
+          <span className="eyebrow">SAST + LLM CODE AUDIT</span>
           <h2>代码审计</h2>
-          <p>按风险集中审阅漏洞、受影响代码和修复建议</p>
+          <p>规则扫描与大模型分批复核，审计快照持久化供调查关联</p>
         </div>
         <div className="flex gap-2">
           <select
@@ -105,7 +106,7 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
           </Button>
           <Button size="sm" disabled={!id || busy} onClick={runScan}>
             <Play size={14} />
-            {busy ? "扫描中…" : "运行扫描"}
+            {busy ? "AI 审计中…" : "运行扫描"}
           </Button>
         </div>
       </header>
@@ -116,6 +117,24 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
           <div>
             <span>漏洞总数</span>
             <strong>{findings.length}</strong>
+          </div>
+        </article>
+        <article className="ai">
+          <BrainCircuit />
+          <div>
+            <span>AI 发现 / 复核</span>
+            <strong>
+              {(scan?.ai_findings_count || 0) + (scan?.ai_confirmed_count || 0)}
+            </strong>
+            <small>
+              {scan?.ai_audit?.status === "completed"
+                ? scan.ai_audit.model
+                : scan?.ai_audit?.status === "partial"
+                  ? "部分完成"
+                  : scan?.ai_audit?.status === "failed"
+                    ? "审计失败"
+                    : "等待扫描"}
+            </small>
           </div>
         </article>
         <article className="risk">
@@ -178,6 +197,13 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
           {scan && (
             <div className="audit-risk-strip">
               <Badge value={scan.status} />
+              <span className="audit-ai-state">
+                <BrainCircuit size={12} /> AI 审计 ·{" "}
+                {scan.ai_audit?.status || "未运行"}
+                {scan.ai_audit?.chunks_analyzed
+                  ? ` · ${scan.ai_audit.chunks_analyzed} 分块`
+                  : ""}
+              </span>
               <span>
                 扫描快照 {String(scan.id || "").replace("scan-", "#")}
               </span>
@@ -208,13 +234,16 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
                       <td>
                         <strong>{item.type}</strong>
                         <small>
-                          {item.rule} · {item.cwe}
+                          {item.rule} · {item.cwe} · {item.source}
                         </small>
                       </td>
                       <td className="audit-location">
                         {item.file}
                         <small>
-                          第 {item.line} 行 · {item.function}()
+                          第 {item.line} 行 ·{" "}
+                          {item.kind === "AI Finding"
+                            ? "AI 定位"
+                            : `${item.function}()`}
                         </small>
                       </td>
                       <td>
@@ -258,12 +287,29 @@ export function CodeAudit({ run }: { run: (fn: () => Promise<any>) => void }) {
                     {finding.file}:{finding.line}
                   </dd>
                   <dt>所在函数</dt>
-                  <dd>{finding.function}()</dd>
+                  <dd>
+                    {finding.kind === "AI Finding"
+                      ? "AI 定位"
+                      : `${finding.function}()`}
+                  </dd>
                   <dt>置信度</dt>
                   <dd>
                     <Badge value={finding.confidence} />
                   </dd>
+                  <dt>审计来源</dt>
+                  <dd>{finding.source}</dd>
                 </dl>
+                {finding.ai_review && (
+                  <div className="audit-ai-review">
+                    <h3>
+                      <BrainCircuit size={14} /> 大模型复核确认
+                    </h3>
+                    <p>{finding.ai_review.description}</p>
+                    <small>
+                      {finding.ai_review.model} · {finding.ai_review.confidence}
+                    </small>
+                  </div>
+                )}
                 <div>
                   <h3>问题描述</h3>
                   <p>{finding.description}</p>

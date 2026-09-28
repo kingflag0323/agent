@@ -2,7 +2,7 @@
 
 **Windows 独立桌面程序，基于 LovelyMiscLab 的 React 页面二次开发，以 Electron 承载。新版不使用 Qt。** 双击 `DoublePupil.exe` 即可启动：内嵌页面和 Python 后台随程序启动，无需浏览器、外置 Python、Node、数据库或 WSL。
 
-本版 **0.4** 新增资产拓扑与内网发现、二级设置目录、定时漏洞情报、调查思维链和 Word 报告，并以已导入的 Pikachu PHP 靶场验证。桌面标题栏持续显示当前模块、本地服务、XDR 数据模式、事件与漏洞数量、运行中调查及 AI 模型。详见 [0.4 使用说明](docs/DOUBLE_PUPIL_V04.md)；SSH 范围见 [修复边界](docs/DOUBLE_PUPIL.md)。
+本版 **0.4** 新增资产拓扑与内网发现、二级设置目录、定时漏洞情报、调查思维链和 Word 报告，并以已导入的 Pikachu PHP 靶场验证。桌面标题栏持续显示当前模块、本地服务、XDR 数据模式、事件与漏洞数量、运行中调查及 AI 模型。详见 [0.4 使用说明](docs/DOUBLE_PUPIL_V04.md)、[大模型审计实测记录](docs/llm-code-audit-validation.json)；SSH 范围见 [修复边界](docs/DOUBLE_PUPIL.md)。
 
 ## 打开程序
 
@@ -22,7 +22,7 @@
 1. **态势**：当前数据源已同步的平台事件、风险、关联主机与攻击类型。
 2. **事件**：搜索 / 风险筛选 / 分页 → 事件检查器 → 选择对应源码项目 → AI Investigation。
 3. **调查思维链**：统一展示证据库、紧凑攻击路径、代码/证据检查器和实际执行节点；支持 Word / Markdown / JSON 导出。
-4. **代码审计**：本地 / ZIP / 公开 Git 导入、真实 Bandit/PHP 规则扫描，并以漏洞清单、风险统计、紧凑代码证据和修复建议为中心呈现结果。
+4. **代码审计**：本地 / ZIP / 公开 Git 导入，先执行真实 Bandit/PHP 规则扫描，再把受限代码分块交给已配置的大模型审计；模型结果经文件与行号校验后写入 SQLite，并以漏洞清单、风险统计、紧凑代码证据和修复建议为中心呈现。
 6. **资产**：默认拓扑与列表，点击新增才登记；支持内网 TCP 发现、标签、源码/Web 服务绑定和 SSH 授权。
 7. **威胁情报**：CISA / NVD 漏洞动态，定期持久化、筛选和检索。
 8. **设置**：二级目录分开配置模型、XDR、智能体、Skills/RAG、工作/输出目录、扫描和情报 API/计划。
@@ -62,7 +62,7 @@ XDR 仅调用文档内的只读事件、告警、网络日志与实体接口；�
 
 实际复用并修改：`index.css`、`LeftRail.tsx`、`store/theme.ts`、`components/ui/button.tsx`、`lib/utils.ts`。保留 `workbench/LICENSE` 与 `workbench/UPSTREAM.md`，组合 Workbench 发行采用 GPL-3.0-only 并提供相应源码。未使用上游 Rust 取证引擎、MCP、脚本执行或自动更新模块。
 
-我们新增：事件检查器、XDR/后端 IPC、紧凑攻击路径与调查执行过程、资产管理、Skills/RAG 检索、受约束 SSH 修复、代码审计、模型/连接配置、报告导出、系统主题和独立 Electron + Python 打包。Electron/Chromium 和其他第三方许可证随包保留，详见 `THIRD_PARTY_NOTICES.md` 与 `docs/licenses-workbench/`。
+我们新增：事件检查器、XDR/后端 IPC、紧凑攻击路径与调查执行过程、资产管理、Skills/RAG 检索、受约束 SSH 修复、规则与大模型组合代码审计、审计快照复用、模型/连接配置、报告导出、系统主题和独立 Electron + Python 打包。Electron/Chromium 和其他第三方许可证随包保留，详见 `THIRD_PARTY_NOTICES.md` 与 `docs/licenses-workbench/`。
 
 ## 源码构建
 
