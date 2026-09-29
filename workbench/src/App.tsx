@@ -10,6 +10,7 @@ import { Assets } from "@/views/Assets";
 import { Intelligence } from "@/views/Intelligence";
 import { Canvas } from "@/views/Canvas";
 import { CodeAudit } from "@/views/CodeAudit";
+import { InvestigationResults } from "@/views/InvestigationResults";
 import { Settings } from "@/views/Settings";
 export default function App() {
   const { view, setView } = useViewStore();
@@ -81,6 +82,9 @@ export default function App() {
           {view === "intelligence" && <Intelligence run={run} />}
           {view === "code" && <CodeAudit run={run} />}{" "}
           {view === "runs" && <Canvas id={job} selectJob={setJob} run={run} />}{" "}
+          {view === "results" && (
+            <InvestigationResults id={job} selectJob={setJob} run={run} />
+          )}{" "}
           {view === "settings" && <Settings run={run} onSave={refresh} />}
         </div>
       </div>

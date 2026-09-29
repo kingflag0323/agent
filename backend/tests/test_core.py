@@ -28,7 +28,7 @@ def test_sql_complete_evidence_chain(client):
     assert m['confidence']=='high';assert j['analysis']['provider']=='mock'
     assert {e['kind'] for e in j['evidence']}=={'Demo Fact','Static Finding'}
     ids={e['id'] for e in j['evidence']};assert all(id in ids for id in m['evidence_ids'])
-    report=client.get(f"/api/investigations/{j['id']}/report");assert report.status_code==200;assert '参数化查询' in report.text
+    report=client.get(f"/api/investigations/{j['id']}/report");assert report.status_code==200;assert '参数化查询' in report.text;assert '攻击链：198.51.100.42' in report.text;assert '证据链与索引' in report.text
 
 def test_command_chain_and_negative_control(client):
     positive=create_job('demo-002');assert positive['correlation']['matches'][0]['finding']['cwe']=='CWE-78'

@@ -108,7 +108,7 @@ def test_word_document_contains_trace_and_evidence(client):
     response=client.get('/api/investigations/inv-word/report?format=docx')
     assert response.status_code==200 and 'wordprocessingml' in response.headers['content-type']
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-        xml=z.read('word/document.xml').decode();assert '调查思维链' in xml and 'Static analysis' in xml and 'pikachu' in xml
+        xml=z.read('word/document.xml').decode();assert '调查思维链' in xml and 'Static analysis' in xml and 'pikachu' in xml and '证据链、索引与来源' in xml
 
 def test_php_workflow_end_to_end(client,monkeypatch):
     from app.code_analysis.projects import create

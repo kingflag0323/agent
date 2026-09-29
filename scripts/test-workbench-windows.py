@@ -134,6 +134,15 @@ try:
   with zipfile.ZipFile(io.BytesIO(raw)) as z:assert '调查思维链' in z.read('word/document.xml').decode()
   page.screenshot(path=str(output/'10-investigation-process.png'))
   result['steps'].append('Investigation execution nodes and actual OOXML Word export from packaged sidecar')
+  page.get_by_role('button',name='结果',exact=True).click()
+  expect(page.get_by_role('heading',name='调查结果',exact=True)).to_be_visible()
+  expect(page.get_by_role('heading',name='攻击者攻击链路',exact=True)).to_be_visible()
+  assert page.locator('.result-chain-node').count()>=4
+  expect(page.locator('.result-evidence-step').first).to_be_visible()
+  page.locator('.result-evidence-step').first.click();expect(page.locator('.result-evidence-inspector .json')).to_be_visible()
+  expect(page.get_by_role('button',name='导出 Word',exact=True)).to_be_enabled()
+  page.screenshot(path=str(output/'14-investigation-result.png'))
+  result['steps'].append('Final result page presents attacker path, evidence chain, evidence provenance and report exports')
   if pikachu:
    project=page.evaluate("async(path)=>{const rows=await window.desktop.request('/projects');return rows.find(p=>p.name==='Pikachu acceptance')||await window.desktop.request('/projects','POST',{name:'Pikachu acceptance',source:'local',path})}",pikachu['path'])
    page.get_by_role('button',name='代码审计',exact=True).click();page.get_by_label('代码项目').select_option(project['id'])

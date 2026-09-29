@@ -68,6 +68,13 @@ try:
         expect(page.locator(".chain-node").first).to_be_visible()
         page.screenshot(path=str(output / "installed-investigation-chain.png"))
 
+        page.get_by_role("button", name="结果", exact=True).click()
+        expect(page.get_by_role("heading", name="调查结果", exact=True)).to_be_visible()
+        expect(page.get_by_role("heading", name="攻击者攻击链路", exact=True)).to_be_visible()
+        expect(page.locator(".result-evidence-step").first).to_be_visible()
+        expect(page.get_by_role("button", name="导出 Word", exact=True)).to_be_enabled()
+        page.screenshot(path=str(output / "installed-investigation-result.png"))
+
         page.get_by_role("button", name="代码审计", exact=True).click()
         expect(page.get_by_role("heading", name="代码审计", exact=True)).to_be_visible()
         expect(page.get_by_role("heading", name="漏洞清单", exact=True)).to_be_visible()
@@ -88,6 +95,7 @@ try:
                 "light and dark themes",
                 "single investigation-chain navigation",
                 "compact attack path and execution timeline",
+                "attacker path, evidence chain and report export result page",
                 "vulnerability-first code audit",
             ],
         }

@@ -1,10 +1,21 @@
 import json
 
+def attacker_ip(job):
+    if job.get('event',{}).get('source_ip'):return job['event']['source_ip']
+    stack=[e.get('content') for e in job.get('evidence',[])]
+    while stack:
+        value=stack.pop()
+        if isinstance(value,dict):
+            if value.get('srcIp') or value.get('sourceIp'):return value.get('srcIp') or value.get('sourceIp')
+            stack.extend(value.values())
+        elif isinstance(value,list):stack.extend(value)
+    return '未提供'
+
 def markdown(job):
-    e=job['event'];c=job.get('correlation',{});lines=[f"# 调查报告：{e['name']}",'',f"调查 ID：{job['id']}",f"状态：{job['status']}",f"数据来源：{e['source']}（demo 为合成演示数据）",f"代码快照 SHA-256：{job.get('snapshot','未生成')}",'','## 结论','',c.get('summary','调查尚未完成'),'','所有关联均为待验证推断；不证明此次利用成功。','']
+    e=job['event'];c=job.get('correlation',{});lines=[f"# 调查报告：{e['name']}",'',f"调查 ID：{job['id']}",f"状态：{job['status']}",f"数据来源：{e['source']}（demo 为合成演示数据）",f"攻击者来源：{attacker_ip(job)}",f"目标资产：{e.get('asset_ip') or e.get('asset','未提供')}",f"代码快照 SHA-256：{job.get('snapshot','未生成')}",'','## 结论','',c.get('summary','调查尚未完成'),'','所有关联均为待验证推断；不证明此次利用成功。','']
     for m in c.get('matches',[]):
-        f=m['finding'];lines += [f"## {f['type']} · {f['cwe']}",'',f"入口：{m['entry']['method']} {m['entry']['path']}",f"漏洞位置：{f['file']}:{f['line']} / {f['function']}",f"关联置信度：{m['confidence']}（启发式等级，非统计概率）",'','调用链：'+' → '.join(x['name'] for x in m['chain']),'','### 依据','']+['- '+x for x in m['reasons']]+['','证据：'+', '.join(m['evidence_ids']),'','```python',f['code'],'```','','### 修复建议','',f['fix'],'','```python',f['patch'],'```','']
-    lines += ['## 辅助研判（AI Inference）','',job.get('analysis',{}).get('text','未生成'),'','## 限制','']+['- '+x for x in job.get('review',{}).get('limitations',[])]+['- '+x for x in job.get('warnings',[])]+['','## 证据索引','']
+        f=m['finding'];path=' → '.join([attacker_ip(job),e.get('asset_ip') or e.get('asset','目标资产'),str(m['entry'].get('method') or 'HTTP')+' '+m['entry']['path']]+[x['name']+'()' for x in m['chain']]);lines += [f"## {f['type']} · {f['cwe']}",'',f"攻击链：{path}",f"入口：{m['entry']['method']} {m['entry']['path']}",f"漏洞位置：{f['file']}:{f['line']} / {f['function']}",f"关联置信度：{m['confidence']}（启发式等级，非统计概率）",'','代码调用链：'+' → '.join(x['name'] for x in m['chain']),'','### 依据','']+['- '+x for x in m['reasons']]+['','证据链 ID：'+', '.join(m['evidence_ids']),'','```python',f['code'],'```','','### 修复建议','',f['fix'],'','```python',f['patch'],'```','']
+    lines += ['## 辅助研判（AI Inference）','',job.get('analysis',{}).get('text','未生成'),'','## 限制','']+['- '+x for x in job.get('review',{}).get('limitations',[])]+['- '+x for x in job.get('warnings',[])]+['','## 证据链与索引','']
     for v in job.get('evidence',[]): lines += [f"### {v['id']} · {v['kind']} · {v['title']}",f"来源：{v['source']} / {v['provenance']}",f"SHA-256：{v['sha256']}",'','```json',json.dumps(v['content'],ensure_ascii=False,indent=2),'```','']
     return '\n'.join(lines)
 
@@ -18,7 +29,7 @@ def word(job):
     style.element.rPr.rFonts.set(qn('w:eastAsia'),'Microsoft YaHei')
     doc.add_heading('Double Pupil · 安全调查报告',0)
     doc.add_heading(job['event']['name'],1)
-    for key,value in [('调查 ID',job['id']),('事件来源',job['event']['source']),('资产',job['event'].get('asset_ip','')),('代码项目',job['project']['name']),('代码快照 SHA-256',job.get('snapshot',''))]:doc.add_paragraph(f'{key}：{value}')
+    for key,value in [('调查 ID',job['id']),('事件来源',job['event']['source']),('攻击者来源',attacker_ip(job)),('目标资产',job['event'].get('asset_ip') or job['event'].get('asset','')),('代码项目',job['project']['name']),('代码快照 SHA-256',job.get('snapshot',''))]:doc.add_paragraph(f'{key}：{value}')
     if job.get('target_ips'):doc.add_paragraph('告警目的地址：'+', '.join(job['target_ips']))
     if job.get('target_assets'):doc.add_paragraph('目的资产：'+', '.join(a['name'] for a in job['target_assets']))
     doc.add_heading('调查结论',1);doc.add_paragraph(job.get('correlation',{}).get('summary','尚无结论'))
@@ -30,6 +41,8 @@ def word(job):
         for cell,value in zip(table.add_row().cells,[step.get('name',''),step.get('tool',''),step.get('status',''),step.get('note','')]):cell.text=str(value)
     for match in job.get('correlation',{}).get('matches',[]):
         f=match['finding'];doc.add_heading(f"{f['cwe']} · {f['file']}:{f['line']}",1)
+        path=' → '.join([attacker_ip(job),job['event'].get('asset_ip') or job['event'].get('asset','目标资产'),str(match['entry'].get('method') or 'HTTP')+' '+match['entry']['path']]+[n['name']+'()' for n in match['chain']])
+        doc.add_paragraph('攻击链：'+path)
         doc.add_paragraph('攻击入口：'+str(match['entry'].get('method') or 'HTTP')+' '+match['entry']['path'])
         doc.add_paragraph('关联等级：'+match['confidence'])
         doc.add_paragraph(' → '.join(n['name'] for n in match['chain']))
@@ -41,7 +54,7 @@ def word(job):
     doc.add_heading('模型辅助研判（未验证推断）',1);doc.add_paragraph(job.get('analysis',{}).get('text','未生成'))
     doc.add_heading('限制与告警',1)
     for limit in job.get('review',{}).get('limitations',[])+job.get('warnings',[]):doc.add_paragraph(limit,style='List Bullet')
-    doc.add_heading('证据索引与来源',1)
+    doc.add_heading('证据链、索引与来源',1)
     for evidence in job.get('evidence',[]):
         doc.add_heading(evidence['id']+' · '+evidence['title'],2)
         doc.add_paragraph(f"{evidence['kind']} / {evidence['source']} / {evidence['provenance']}")

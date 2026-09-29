@@ -6,6 +6,7 @@ export type View =
   | "events"
   | "code"
   | "runs"
+  | "results"
   | "settings";
 export const useViewStore = create<{ view: View; setView: (v: View) => void }>(
   (set) => ({ view: "overview", setView: (view) => set({ view }) }),

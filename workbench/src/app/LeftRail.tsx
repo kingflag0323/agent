@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   type LucideIcon,
   Package,
+  FileText,
   Settings,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ const ITEMS: Item[] = [
   { view: "events", label: "事件", icon: Boxes },
   { view: "code", label: "代码审计", icon: Package },
   { view: "runs", label: "思维链", icon: History },
+  { view: "results", label: "结果", icon: FileText },
 ];
 const SETTINGS: Item = { view: "settings", label: "设置", icon: Settings };
 

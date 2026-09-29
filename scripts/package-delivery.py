@@ -21,7 +21,7 @@ def sha(p):
  with p.open('rb') as f:
   for b in iter(lambda:f.read(1024*1024),b''):h.update(b)
  return h.hexdigest()
-manifest={'product':'Double Pupil','version':'0.4.0','platform':'Windows x64','investigation_workspace':'compact-chain','code_workspace':'sast-llm-persisted','backend_tests':47,'desktop_acceptance_groups':16,'live_xdr':json.loads((root/'docs/double-pupil-live-check.json').read_text()),'real_ssh_remediation_executed':False,'automatic_recipe':'sqlite-parameterization-v1','portable_archive':{'name':archive.name,'bytes':archive.stat().st_size,'sha256':sha(archive)},'executable_sha256':sha(target/'DoublePupil.exe'),'data_directory':'%LOCALAPPDATA%/Sentinel/data (compatibility)'}
+manifest={'product':'Double Pupil','version':'0.4.0','platform':'Windows x64','investigation_workspace':'compact-chain-and-results','code_workspace':'sast-llm-persisted','backend_tests':47,'desktop_acceptance_groups':17,'live_xdr':json.loads((root/'docs/double-pupil-live-check.json').read_text()),'real_ssh_remediation_executed':False,'automatic_recipe':'sqlite-parameterization-v1','portable_archive':{'name':archive.name,'bytes':archive.stat().st_size,'sha256':sha(archive)},'executable_sha256':sha(target/'DoublePupil.exe'),'data_directory':'%LOCALAPPDATA%/Sentinel/data (compatibility)'}
 manifest['overview_acceptance']=json.loads((root/'docs/screenshots-overview/result.json').read_text())
 manifest['desktop_acceptance']=json.loads((root/'docs/screenshots-double-pupil-v04/result.json').read_text())
 (root/'docs/workbench-delivery.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2))

@@ -4,6 +4,7 @@ import {
   Boxes,
   Bug,
   Code2,
+  FileText,
   History,
   LayoutGrid,
   Radar,
@@ -28,6 +29,7 @@ const VIEW_META: Record<View, { label: string; icon: typeof LayoutGrid }> = {
   events: { label: "安全事件", icon: Boxes },
   code: { label: "代码审计", icon: Code2 },
   runs: { label: "调查思维链", icon: History },
+  results: { label: "调查结果", icon: FileText },
   settings: { label: "系统设置", icon: Settings },
 };
 
